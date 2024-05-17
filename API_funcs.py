@@ -9,7 +9,7 @@ from APIGen import getAPIKey
 
 
 # Функция для формирования CSV-файла
-def get_data(lat1, lon1, lat2, lon2, side=.2) -> int:
+def get_data(lat1, lon1, lat2, lon2, user_id, side=.02) -> int:
     language = 'ru'
     format = 'json'
     function = 'box'
@@ -22,6 +22,7 @@ def get_data(lat1, lon1, lat2, lon2, side=.2) -> int:
     keysNeed = len(latSpace) * len(lonSpace)
     keys = getAPIKey('USERNAME', 'PASSWORD', keysNeed)
 
+
     pageNum = 1
     ID, TITLE, URL, LOC = [[] for _ in range(4)]
     DESC, PHOTO = [], []
@@ -29,6 +30,7 @@ def get_data(lat1, lon1, lat2, lon2, side=.2) -> int:
     while True:
         for lat in range(len(latSpace) - 1):
             for lon in range(len(lonSpace) - 1):
+
                 key = lat + lon
                 resp = \
                     f'https://api.wikimapia.org/?key={keys[key % len(keys)]}&function={function}&format={format}&language={language}&lon_min={lonSpace[lon]}&lat_min={latSpace[lat]}&lon_max={lonSpace[lon + 1]}&lat_max={latSpace[lat + 1]}&count=100&page={pageNum}'
@@ -82,6 +84,6 @@ def get_data(lat1, lon1, lat2, lon2, side=.2) -> int:
         }
     )
 
-    dataFrame.to_csv('output.csv', encoding='utf-8', index=False)
+    dataFrame.to_csv(f'{user_id}_output.csv', encoding='utf-8', index=False)
 
     return len(dataFrame)

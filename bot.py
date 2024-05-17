@@ -3,7 +3,7 @@ import telebot as tb
 from API_funcs import get_data
 
 # Инициализация бота
-bot = tb.TeleBot('6833491010:AAEcpWGoVRqbybEN_k7PoXNzYkQprQYyBe0')
+bot = tb.TeleBot('TOKEN')
 
 # Создание клавиатуры
 action_keyboard = tb.types.ReplyKeyboardMarkup()
@@ -42,14 +42,14 @@ def send_data(mes):
     user_id = mes.chat.id
     try:
         lat1, lon1, lat2, lon2 = [float(num) for num in mes.text.replace('\n', ' ').replace(',', ' ').split()]
-        dataCount = get_data(lat1, lon1, lat2, lon2)
+        dataCount = get_data(lat1, lon1, lat2, lon2, user_id)
         bot.send_message(
             user_id,
             f'Было найдено {dataCount} организация в данной области.',
             parse_mode='html',
             reply_markup=action_keyboard
         )
-        bot.send_document(user_id, open(r'output.csv', mode='rb'))
+        bot.send_document(user_id, open(f'{user_id}_output.csv', mode='rb'))
     except Exception:
         bot.send_message(
             user_id,
