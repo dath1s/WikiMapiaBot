@@ -6,6 +6,7 @@ import uuid
 import numpy as np
 
 from APIGen import getAPIKey
+from settings import username, password
 
 
 # Функция для формирования CSV-файла
@@ -20,7 +21,7 @@ def get_data(lat1, lon1, lat2, lon2, user_id, side=.02) -> int:
     latSpace = np.linspace(latMin, latMax, max(2, round(abs(latMax - latMin) / side + .5)), endpoint=True)
     lonSpace = np.linspace(lonMin, lonMax, max(2, round(abs(lonMax - lonMin) / side + .5)), endpoint=True)
     keysNeed = len(latSpace) * len(lonSpace)
-    keys = getAPIKey('USERNAME', 'PASSWORD', keysNeed)
+    keys = getAPIKey(username, password, keysNeed)
 
 
     pageNum = 1

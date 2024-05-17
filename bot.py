@@ -1,9 +1,10 @@
 import telebot as tb
 
 from API_funcs import get_data
+from settings import bot_token
 
 # Инициализация бота
-bot = tb.TeleBot('TOKEN')
+bot = tb.TeleBot(bot_token)
 
 # Создание клавиатуры
 action_keyboard = tb.types.ReplyKeyboardMarkup()
