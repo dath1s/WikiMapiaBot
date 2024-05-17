@@ -1,7 +1,6 @@
 import telebot as tb
 
 from API_funcs import get_data
-from APIGen import getAPIKey
 
 # Инициализация бота
 bot = tb.TeleBot('6833491010:AAEcpWGoVRqbybEN_k7PoXNzYkQprQYyBe0')
@@ -43,8 +42,7 @@ def send_data(mes):
     user_id = mes.chat.id
     try:
         lat1, lon1, lat2, lon2 = [float(num) for num in mes.text.replace('\n', ' ').replace(',', ' ').split()]
-        dataCount = get_data(lat1, lon1, lat2, lon2,
-                             getAPIKey('USERNAME', 'PASSWORD'))
+        dataCount = get_data(lat1, lon1, lat2, lon2)
         bot.send_message(
             user_id,
             f'Было найдено {dataCount} организация в данной области.',

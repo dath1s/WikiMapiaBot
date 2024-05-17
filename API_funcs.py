@@ -3,10 +3,13 @@ import json
 import pandas as pd
 from bs4 import BeautifulSoup
 import uuid
+import numpy as np
+
+from APIGen import getAPIKey
 
 
 # Функция для формирования CSV-файла
-def get_data(lat1, lon1, lat2, lon2, key) -> int:
+def get_data(lat1, lon1, lat2, lon2, side=.2) -> int:
     language = 'ru'
     format = 'json'
     function = 'box'
@@ -14,47 +17,59 @@ def get_data(lat1, lon1, lat2, lon2, key) -> int:
     latMin, latMax = sorted([lat1, lat2])
     lonMin, lonMax = sorted([lon1, lon2])
 
+    latSpace = np.linspace(latMin, latMax, max(2, round(abs(latMax - latMin) / side + .5)), endpoint=True)
+    lonSpace = np.linspace(lonMin, lonMax, max(2, round(abs(lonMax - lonMin) / side + .5)), endpoint=True)
+    keysNeed = len(latSpace) * len(lonSpace)
+    keys = getAPIKey('USERNAME', 'PASSWORD', keysNeed)
+
     pageNum = 1
     ID, TITLE, URL, LOC = [[] for _ in range(4)]
     DESC, PHOTO = [], []
 
     while True:
-        resp = f'https://api.wikimapia.org/?key={key}&function={function}&format={format}&language={language}&lon_min={lonMin}&lat_min={latMin}&lon_max={lonMax}&lat_max={latMax}&count=100&page={pageNum}'
+        for lat in range(len(latSpace) - 1):
+            for lon in range(len(lonSpace) - 1):
+                key = lat + lon
+                resp = \
+                    f'https://api.wikimapia.org/?key={keys[key % len(keys)]}&function={function}&format={format}&language={language}&lon_min={lonSpace[lon]}&lat_min={latSpace[lat]}&lon_max={lonSpace[lon + 1]}&lat_max={latSpace[lat + 1]}&count=100&page={pageNum}'
 
-        try:
-            response = requests.get(resp)
-            resJSON = json.loads(response.text)
-            objects = resJSON["folder"]
+                try:
+                    response = requests.get(resp)
+                    resJSON = json.loads(response.text)
+                    objects = resJSON["folder"]
 
-            if objects:
-                for obj in objects:
-                    ID.append(obj['id'])
-                    TITLE.append(obj['name'])
-                    URL.append(obj['url'])
-                    LOC.append(obj['location'])
+                    if objects:
+                        for obj in objects:
+                            if obj['id'] not in ID:
+                                ID.append(obj['id'])
+                                TITLE.append(obj['name'])
+                                URL.append(obj['url'])
+                                LOC.append(obj['location'])
 
-                    page = requests.get(obj['url'], headers={
-                        'User-agent': str(uuid.uuid1()) + ' BOT'})
-                    if page.status_code == 200:
-                        soup = BeautifulSoup(page.text, "html.parser")
-                        allPics = [img['src'] for img in soup.findAll('img', class_='photo-thumbnail')]
-                        PHOTO.append(allPics)
+                                page = requests.get(obj['url'], headers={
+                                    'User-agent': str(uuid.uuid1()) + ' BOT'})
+                                if page.status_code == 200:
+                                    soup = BeautifulSoup(page.text, "html.parser")
+                                    allPics = [img['src'] for img in soup.findAll('img', class_='photo-thumbnail')]
+                                    PHOTO.append(allPics)
 
-                        soup = BeautifulSoup(page.text, "html.parser")
-                        remove_attr = ['<br/>', '<div class="placeinfo-row" id="place-description">', '<div/>',
-                                       'rel="nofollow"', 'target="_blank"']
-                        desc = soup.findAll('div', {"id": "place-description"})
-                        desc = str(desc[0] if desc else '-')
+                                    soup = BeautifulSoup(page.text, "html.parser")
+                                    remove_attr = ['<br/>', '<div class="placeinfo-row" id="place-description">',
+                                                   '</div>',
+                                                   'rel="nofollow"', 'target="_blank"']
+                                    desc = soup.findAll('div', {"id": "place-description"})
+                                    desc = str(desc[0] if desc else '-')
 
-                        for attr in remove_attr:
-                            desc = desc.replace(attr, '')
-                        DESC.append(desc)
+                                    for attr in remove_attr:
+                                        desc = desc.replace(attr, '')
+                                    DESC.append(desc)
 
-                pageNum += 1
-            else:
-                break
-        except Exception:
-            break
+                        pageNum += 1
+                    else:
+                        break
+                except Exception:
+                    break
+        break
 
     dataFrame = pd.DataFrame(
         data={

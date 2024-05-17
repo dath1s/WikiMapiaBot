@@ -5,13 +5,13 @@ import time
 import uuid
 
 
-def getAPIKey(username, pw) -> str:
+def getAPIKey(username, pw, keyNeed) -> list[str]:
     payload = {
         'username': username,
         'pw1': pw,
     }
 
-    lastKey = '31B06847-E251A1CF-9C47236E-01D3FC9A-C74EA018-294BB69E-43921E67-99220EBC'
+    keys = '31B06847-E251A1CF-9C47236E-01D3FC9A-C74EA018-294BB69E-43921E67-99220EBC'
 
     svc = webdriver.ChromeService(executable_path=binary_path)
     driver = webdriver.Chrome(service=svc)
@@ -35,19 +35,24 @@ def getAPIKey(username, pw) -> str:
         logInBtn.click()
         time.sleep(1)
 
-        driver.get('https://wikimapia.org/api/?action=create_key')
-        time.sleep(1)
-        driver.find_element(By.CLASS_NAME, 'checkbox').click()
-        driver.find_element(By.NAME, 'site_name').send_keys(str(uuid.uuid1()))
-        driver.find_element(By.CLASS_NAME, 'btn-primary').click()
-        time.sleep(1)
+        driver.get('https://wikimapia.org/api/?action=my_keys')
+        keys = [key.text.split()[0] for key in driver.find_elements(By.TAG_NAME, 'dd')[1:][::4]]
+
+        if len(keys) != keyNeed:
+            for _ in range(min(keyNeed - len(keys), 5)):
+                driver.get('https://wikimapia.org/api/?action=create_key')
+                time.sleep(1)
+                driver.find_element(By.CLASS_NAME, 'checkbox').click()
+                driver.find_element(By.NAME, 'site_name').send_keys(str(uuid.uuid1()))
+                driver.find_element(By.CLASS_NAME, 'btn-primary').click()
+                time.sleep(1)
 
         driver.get('https://wikimapia.org/api/?action=my_keys')
-        lastKey = driver.find_elements(By.TAG_NAME, 'dd')[1:][::4][-1].text.split()[0]
+        keys = [key.text.split()[0] for key in driver.find_elements(By.TAG_NAME, 'dd')[1:][::4]]
     except Exception as e:
         pass
     finally:
         driver.close()
         driver.quit()
 
-    return lastKey
+    return keys
